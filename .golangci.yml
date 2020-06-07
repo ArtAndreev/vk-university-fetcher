@@ -1,0 +1,70 @@
+run:
+  modules-download-mode: vendor
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - interfacer
+    - lll
+    - maligned
+    - misspell
+    - nakedret
+    - prealloc
+    - scopelint
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+    - wsl
+  fast: false
+
+linters-settings:
+  dupl:
+    # tokens count to trigger issue, 150 by default
+    threshold: 100
+  errcheck:
+    # report about not checking of errors in type assertions: `a := b.(MyStruct)`;
+    # default is false: such cases aren't reported by default.
+    check-type-assertions: true
+  funlen:
+    lines: 60
+    statements: 40
+  gocognit:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 20
+  gocyclo:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 20
+  lll:
+    # max line length, lines longer will be reported. Default is 120.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
+    line-length: 120
+    # tab width in spaces. Default to 1.
+    tab-width: 4
