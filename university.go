@@ -112,7 +112,7 @@ func runWorker(taskCh <-chan Entity, db *pgxpool.Pool, vkFetcher *fetcher) error
 
 				res, err := db.Exec(
 					context.TODO(),
-					`INSERT INTO info_university (city, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+					`INSERT INTO university (city, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 					city.Title, title,
 				)
 				if err != nil {
