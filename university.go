@@ -95,6 +95,8 @@ func main() {
 
 func runWorker(taskCh <-chan Entity, db *pgxpool.Pool, vkFetcher *fetcher) error {
 	for city := range taskCh {
+		city.Title = strings.TrimSpace(city.Title)
+
 		offset := 0
 
 		for {
@@ -110,8 +112,8 @@ func runWorker(taskCh <-chan Entity, db *pgxpool.Pool, vkFetcher *fetcher) error
 
 				res, err := db.Exec(
 					context.TODO(),
-					`INSERT INTO info_university (name) VALUES ($1) ON CONFLICT DO NOTHING`,
-					title,
+					`INSERT INTO info_university (city, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+					city.Title, title,
 				)
 				if err != nil {
 					return fmt.Errorf("city '%s': failed to insert uni: %s", city.Title, err)
