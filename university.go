@@ -68,7 +68,7 @@ func main() {
 	offset := 0
 
 	for {
-		cities, err := vkFetcher.GetRussianCities(context.TODO(), *allCities, offset)
+		cities, err := vkFetcher.GetRussianCities(context.TODO(), *allCities, maxCitiesCountPerRequest, offset)
 		if err != nil {
 			log.Printf("failed to get russian cities, offset %d: %s", offset, err)
 			break
@@ -106,7 +106,7 @@ func runWorker(taskCh <-chan Entity, db *pgxpool.Pool, vkFetcher *fetcher) error
 		offset := 0
 
 		for {
-			unis, err := vkFetcher.GetUniversities(context.TODO(), city.ID, offset)
+			unis, err := vkFetcher.GetUniversities(context.TODO(), city.ID, maxUniCountPerRequest, offset)
 			if err != nil {
 				return fmt.Errorf("city '%s': get russian unis, offset %d: %w", city.Title, offset, err)
 			}

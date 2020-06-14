@@ -32,7 +32,7 @@ const (
 	maxCitiesCountPerRequest = 1000
 )
 
-func (f *fetcher) GetRussianCities(ctx context.Context, needAll bool, offset int) ([]Entity, error) {
+func (f *fetcher) GetRussianCities(ctx context.Context, needAll bool, count, offset int) ([]Entity, error) {
 	const urlCities = "https://api.vk.com/method/database.getCities?country_id=1&v=5.103"
 
 	u, err := url.Parse(urlCities)
@@ -47,7 +47,7 @@ func (f *fetcher) GetRussianCities(ctx context.Context, needAll bool, offset int
 		q.Set("need_all", "1")
 	}
 
-	q.Set("count", strconv.Itoa(maxCitiesCountPerRequest))
+	q.Set("count", strconv.Itoa(count))
 	q.Set("offset", strconv.Itoa(offset))
 
 	u.RawQuery = q.Encode()
@@ -64,7 +64,7 @@ const (
 	maxUniCountPerRequest = 10000
 )
 
-func (f *fetcher) GetUniversities(ctx context.Context, city, offset int) ([]Entity, error) {
+func (f *fetcher) GetUniversities(ctx context.Context, city, count, offset int) ([]Entity, error) {
 	const urlCities = "https://api.vk.com/method/database.getUniversities?v=5.103"
 
 	u, err := url.Parse(urlCities)
@@ -75,7 +75,7 @@ func (f *fetcher) GetUniversities(ctx context.Context, city, offset int) ([]Enti
 	q := u.Query()
 	q.Set("access_token", f.token)
 
-	q.Set("count", strconv.Itoa(maxUniCountPerRequest))
+	q.Set("count", strconv.Itoa(count))
 	q.Set("offset", strconv.Itoa(offset))
 
 	q.Set("city_id", strconv.Itoa(city))
