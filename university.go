@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -97,32 +98,37 @@ func runWorker(taskCh <-chan Entity, db *pgxpool.Pool, vkFetcher *fetcher) error
 	for city := range taskCh {
 		city.Title = strings.TrimSpace(city.Title)
 
+		cityID, err := insertCity(db, city.Title)
+		if err != nil {
+			return fmt.Errorf("city '%s': insert (id = %d): %w", city.Title, city.ID, err)
+		}
+
 		offset := 0
 
 		for {
 			unis, err := vkFetcher.GetUniversities(context.TODO(), city.ID, offset)
 			if err != nil {
-				return fmt.Errorf("failed to get russian unis, offset %d: %w", offset, err)
+				return fmt.Errorf("city '%s': get russian unis, offset %d: %w", city.Title, offset, err)
 			}
 
 			log.Printf("city '%s': fetched %d unis", city.Title, len(unis))
 
 			for i, u := range unis {
-				title := strings.TrimSpace(u.Title)
+				u.Title = strings.TrimSpace(u.Title)
 
 				res, err := db.Exec(
 					context.TODO(),
 					`INSERT INTO university (city, name) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-					city.Title, title,
+					cityID, u.Title,
 				)
 				if err != nil {
-					return fmt.Errorf("city '%s': failed to insert uni: %s", city.Title, err)
+					return fmt.Errorf("city '%s': insert uni '%s': %s", city.Title, u.Title, err)
 				}
 
 				if res.RowsAffected() == 0 {
 					log.Printf(
 						"city '%s': uni exists (id = %d, name = '%s'), skipping: %d/%d",
-						city.Title, u.ID, title, i, len(unis),
+						city.Title, u.ID, u.Title, i, len(unis),
 					)
 				}
 			}
@@ -136,4 +142,42 @@ func runWorker(taskCh <-chan Entity, db *pgxpool.Pool, vkFetcher *fetcher) error
 	}
 
 	return nil
+}
+
+func insertCity(db *pgxpool.Pool, name string) (int32, error) {
+	tx, err := db.Begin(context.TODO())
+	if err != nil {
+		return 0, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(context.TODO()) //nolint:errcheck
+
+	var cityID int32
+	if err = tx.
+		QueryRow(
+			context.TODO(),
+			`INSERT INTO city (name) VALUES ($1) ON CONFLICT DO NOTHING RETURNING id`,
+			name,
+		).
+		Scan(&cityID); err != nil {
+		if err != pgx.ErrNoRows {
+			return 0, fmt.Errorf("insert city '%s': %w", name, err)
+		}
+
+		log.Printf(
+			"city '%s': city exists (name = '%s')",
+			name, name,
+		)
+
+		if err = tx.
+			QueryRow(
+				context.TODO(),
+				`SELECT id FROM city WHERE name = $1`,
+				name,
+			).
+			Scan(&cityID); err != nil {
+			return 0, fmt.Errorf("select city '%s': %w", name, err)
+		}
+	}
+
+	return cityID, tx.Commit(context.TODO())
 }
